@@ -25,88 +25,140 @@ Note that the Makefile generates long-lived intermediate certificates. While thi
 acceptable for demonstration purposes, a more realistic and secure deployment would use
 short-lived and automatically renewed certificates for the intermediate CAs.
 
-```
+## Generate Root Certs
+
+1. Generate Root Certs A
+
+```bash
 make -f Makefile.selfsigned.mk root-ca
 make -f Makefile.selfsigned.mk intermediateA-cacerts
-make -f Makefile.selfsigned.mk intermediateA-cacerts
+make -f Makefile.selfsigned.mk intermediateB-cacerts
+
+mkdir rootA
+
+mv root-* rootA
+mv intermediateA rootA
+mv intermediateB rootA
 ```
 
-```bash
-kubectl create namespace istio-system && \
-kubectl create secret generic cacerts -n istio-system \
-    --from-file=intermediateA/ca-cert.pem \
-    --from-file=intermediateA/ca-key.pem \
-    --from-file=intermediateA/root-cert.pem \
-    --from-file=intermediateA/cert-chain.pem
-```
+## Installing Istio with RootA IntermediateA
 
 
-```bash
-istioctl install -y
+1. Create cacerts
 
-kubectl get cm istio-ca-root-cert -o jsonpath="{.data['root-cert\.pem']}" | step certificate inspect -
-```
+    ```bash
+    kubectl delete secret cacerts -n istio-system && \
+    kubectl create secret generic cacerts -n istio-system \
+        --from-file=rootA/intermediateA/ca-cert.pem \
+        --from-file=rootA/intermediateA/ca-key.pem \
+        --from-file=rootA/intermediateA/root-cert.pem \
+        --from-file=rootA/intermediateA/cert-chain.pem
+    ```
 
-```bash
-kubectl exec -it deploy/sleep -- curl httpbin:8000/headers
-```
+1. Install istio
 
-```bash
-kubectl delete secret cacerts -n istio-system && \
-kubectl create secret generic cacerts -n istio-system \
-    --from-file=intermediateB/ca-cert.pem \
-    --from-file=intermediateB/ca-key.pem \
-    --from-file=intermediateB/root-cert.pem \
-    --from-file=intermediateB/cert-chain.pem
+    ```bash
+    istioctl install -y
+    # verify ca root cert
+    kubectl get cm istio-ca-root-cert -o jsonpath="{.data['root-cert\.pem']}" | step certificate inspect -
+    ```
 
+1. Verify Mesh traffic 
+   
+    ```bash
+    kubectl exec -it deploy/sleep -- curl httpbin:8000/headers
+    ```
 
+## Update cacets with IntermediateB
 
-kubectl get cm istio-ca-root-cert -o jsonpath="{.data['root-cert\.pem']}" | \
-    step certificate inspect -
-```
+1. Recreate cacert with IntermediateB
 
-```bash
-kubectl logs -l app=istiod -nistio-system --tail=-1 | grep "x509 cert - Issuer"
-```
+    ```bash
+    kubectl delete secret cacerts -n istio-system && \
+    kubectl create secret generic cacerts -n istio-system \
+        --from-file=rootA/intermediateB/ca-cert.pem \
+        --from-file=rootA/intermediateB/ca-key.pem \
+        --from-file=rootA/intermediateB/root-cert.pem \
+        --from-file=rootA/intermediateB/cert-chain.pem
+    # verify ca root cert
+    kubectl get cm istio-ca-root-cert -o jsonpath="{.data['root-cert\.pem']}" | step certificate inspect -
+    ```
 
-```bash
-kubectl rollout restart deploy/istiod -n istio-system
-kubectl rollout restart deploy/sleep
-```
+1. Verify istiod's log
 
-```bash
-cat rootA/root-cert.pem > combined-root.pem
-cat rootB/root-cert.pem >> combined-root.pem
+    ```bash
+    kubectl logs -l app=istiod -nistio-system --tail=-1 | grep "x509 cert - Issuer"
+    ```
 
-# use RootA intermediate certs
-kubectl delete secret cacerts -n istio-system && \
-kubectl create secret generic cacerts -n istio-system \
-    --from-file=rootA/intermediateB/ca-cert.pem \
-    --from-file=rootA/intermediateB/ca-key.pem \
-    --from-file=rootA/intermediateB/root-cert.pem \
-    --from-file=rootA/intermediateB/cert-chain.pem
+1. Rollout deployment
 
-# change combined-root
-kubectl delete secret cacerts -n istio-system && \
-kubectl create secret generic cacerts -n istio-system \
-    --from-file=rootA/intermediateB/ca-cert.pem \
-    --from-file=rootA/intermediateB/ca-key.pem \
-    --from-file=combined-root.pem \
-    --from-file=rootA/intermediateB/cert-chain.pem
+    ```bash
+    kubectl rollout restart deploy/istiod -n istio-system
+    kubectl rollout restart deploy/sleep
+    ```
 
-# use RootB intermediate certs
-kubectl delete secret cacerts -n istio-system && \
-kubectl create secret generic cacerts -n istio-system \
-    --from-file=rootB/intermediateB/ca-cert.pem \
-    --from-file=rootB/intermediateB/ca-key.pem \
-    --from-file=combined-root.pem \
-    --from-file=rootB/intermediateB/cert-chain.pem
+## Update Cacerts with Combined Root
 
-# change RootB only
-kubectl delete secret cacerts -n istio-system && \
-kubectl create secret generic cacerts -n istio-system \
-    --from-file=rootB/intermediateB/ca-cert.pem \
-    --from-file=rootB/intermediateB/ca-key.pem \
-    --from-file=rootB/intermediateB/root-cert.pem \
-    --from-file=rootB/intermediateB/cert-chain.pem
-```
+1. Create new root cert
+
+    ```bash
+    make -f Makefile.selfsigned.mk root-ca
+    make -f Makefile.selfsigned.mk intermediateB-cacerts
+
+    mkdir rootB
+
+    mv root-* rootB
+    mv intermediateB rootB
+    ```
+
+1. Combine two root certs into `combined-root.pem`
+
+    ```bash
+    cat rootA/root-cert.pem > combined-root.pem
+    cat rootB/root-cert.pem >> combined-root.pem
+    ```
+
+2. RootA IntermediateB with `combined-root.pem`
+
+    ```bash
+    kubectl delete secret cacerts -n istio-system && \
+    kubectl create secret generic cacerts -n istio-system \
+        --from-file=rootA/intermediateB/ca-cert.pem \
+        --from-file=rootA/intermediateB/ca-key.pem \
+        --from-file=root-cert.pem=combined-root.pem \
+        --from-file=rootA/intermediateB/cert-chain.pem
+    ```
+    
+    **Rollout istiod**
+    
+    **Rollout all workloads**
+
+3. use RootB intermediate certs with `combined-root.pem`
+
+    ```bash
+    kubectl delete secret cacerts -n istio-system && \
+    kubectl create secret generic cacerts -n istio-system \
+        --from-file=rootB/intermediateB/ca-cert.pem \
+        --from-file=rootB/intermediateB/ca-key.pem \
+        --from-file=root-cert.pem=combined-root.pem \
+        --from-file=rootB/intermediateB/cert-chain.pem
+    ```
+    
+    **Rollout istiod**
+
+    **Rollout all workloads**
+
+4. change RootB only
+
+    ```bash
+    kubectl delete secret cacerts -n istio-system && \
+    kubectl create secret generic cacerts -n istio-system \
+        --from-file=rootB/intermediateB/ca-cert.pem \
+        --from-file=rootB/intermediateB/ca-key.pem \
+        --from-file=rootB/intermediateB/root-cert.pem \
+        --from-file=rootB/intermediateB/cert-chain.pem
+    ```
+
+    **Rollout istiod**
+
+    **Rollout all workloads**
