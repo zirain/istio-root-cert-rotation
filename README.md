@@ -103,7 +103,7 @@ mv intermediateB rootA
 
     ```bash
     make -f Makefile.selfsigned.mk root-ca
-    make -f Makefile.selfsigned.mk intermediateB-cacerts
+    make -f Makefile.selfsigned.mk intermediateC-cacerts
 
     mkdir rootB
 
@@ -138,10 +138,10 @@ mv intermediateB rootA
     ```bash
     kubectl delete secret cacerts -n istio-system && \
     kubectl create secret generic cacerts -n istio-system \
-        --from-file=rootB/intermediateB/ca-cert.pem \
-        --from-file=rootB/intermediateB/ca-key.pem \
+        --from-file=rootB/intermediateC/ca-cert.pem \
+        --from-file=rootB/intermediateC/ca-key.pem \
         --from-file=root-cert.pem=combined-root.pem \
-        --from-file=rootB/intermediateB/cert-chain.pem
+        --from-file=rootB/intermediateC/cert-chain.pem
     ```
     
     **Rollout istiod**
@@ -153,10 +153,10 @@ mv intermediateB rootA
     ```bash
     kubectl delete secret cacerts -n istio-system && \
     kubectl create secret generic cacerts -n istio-system \
-        --from-file=rootB/intermediateB/ca-cert.pem \
-        --from-file=rootB/intermediateB/ca-key.pem \
-        --from-file=rootB/intermediateB/root-cert.pem \
-        --from-file=rootB/intermediateB/cert-chain.pem
+        --from-file=rootB/intermediateC/ca-cert.pem \
+        --from-file=rootB/intermediateC/ca-key.pem \
+        --from-file=rootB/intermediateC/root-cert.pem \
+        --from-file=rootB/intermediateC/cert-chain.pem
     ```
 
     **Rollout istiod**
