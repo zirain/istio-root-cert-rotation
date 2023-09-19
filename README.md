@@ -47,7 +47,7 @@ mv intermediateB rootA
 1. Create cacerts
 
     ```bash
-    kubectl delete secret cacerts -n istio-system && \
+    kubectl delete secret cacerts -n istio-system --ignore-not-found && \
     kubectl create secret generic cacerts -n istio-system \
         --from-file=rootA/intermediateA/ca-cert.pem \
         --from-file=rootA/intermediateA/ca-key.pem \
@@ -162,3 +162,10 @@ mv intermediateB rootA
     **Rollout istiod**
 
     **Rollout all workloads**
+
+
+
+## TODO
+
+- [ ] Allow istiod reload combined root cert
+- [ ] Istio agent should regenerate ROOTCA/default cert after ROOTCA changed
