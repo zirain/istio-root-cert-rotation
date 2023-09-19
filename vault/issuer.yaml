@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: cert-manager-vault-token
+  namespace: istio-system
+data:
+  token: "aHZzLjNNcnIwWFJpWHJpWWlubkswSExyT0FXQgo="
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: vault-issuer
+  namespace: istio-system
+spec:
+  vault:
+    path: pki/sign/istio-ca
+    server: http://vault.vault.svc:8200
+    auth:
+      tokenSecretRef:
+        name: cert-manager-vault-token
+        key: token
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: istio-ca
+  namespace: istio-system
+spec:
+  isCA: true
+  duration: 87000h # 10 years, less than Issuer
+  secretName: istio-ca
+  commonName: istio-ca
+  # privateKey:
+  #   algorithm: ECDSA
+  #   size: 256
+  subject:
+    organizations:
+    - cluster.local
+    - cert-manager
+  issuerRef:
+    name: vault-issuer
+    kind: Issuer
+    group: cert-manager.io
