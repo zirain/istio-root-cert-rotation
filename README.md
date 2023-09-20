@@ -74,7 +74,7 @@ mv intermediateB rootA
 1. Recreate cacert with IntermediateB
 
     ```bash
-    kubectl delete secret cacerts -n istio-system && \
+    kubectl delete secret cacerts -n istio-system  --ignore-not-found && \
     kubectl create secret generic cacerts -n istio-system \
         --from-file=rootA/intermediateB/ca-cert.pem \
         --from-file=rootA/intermediateB/ca-key.pem \
@@ -122,7 +122,7 @@ mv intermediateB rootA
 2. RootA IntermediateB with `combined-root.pem`
 
     ```bash
-    kubectl delete secret cacerts -n istio-system && \
+    kubectl delete secret cacerts -n istio-system --ignore-not-found && \
     kubectl create secret generic cacerts -n istio-system \
         --from-file=rootA/intermediateB/ca-cert.pem \
         --from-file=rootA/intermediateB/ca-key.pem \
@@ -137,7 +137,7 @@ mv intermediateB rootA
 3. use RootB intermediate certs with `combined-root.pem`
 
     ```bash
-    kubectl delete secret cacerts -n istio-system && \
+    kubectl delete secret cacerts -n istio-system --ignore-not-found && \
     kubectl create secret generic cacerts -n istio-system \
         --from-file=rootB/intermediateC/ca-cert.pem \
         --from-file=rootB/intermediateC/ca-key.pem \
@@ -152,7 +152,7 @@ mv intermediateB rootA
 4. change RootB only
 
     ```bash
-    kubectl delete secret cacerts -n istio-system && \
+    kubectl delete secret cacerts -n istio-system --ignore-not-found && \
     kubectl create secret generic cacerts -n istio-system \
         --from-file=rootB/intermediateC/ca-cert.pem \
         --from-file=rootB/intermediateC/ca-key.pem \
