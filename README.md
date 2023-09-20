@@ -108,7 +108,8 @@ mv intermediateB rootA
     mkdir rootB
 
     mv root-* rootB
-    mv intermediateB rootB
+    rm -rf rootB/intermediateC
+    mv intermediateC rootB
     ```
 
 1. Combine two root certs into `combined-root.pem`
@@ -166,6 +167,11 @@ mv intermediateB rootA
 
 
 ## TODO
+
+
+previous PRs:
+
+- [pilot-agent support reload ROOTCA](https://github.com/istio/istio/pull/36813)
 
 - [ ] Allow istiod reload combined root cert
 - [ ] Istio agent should regenerate ROOTCA/default cert after ROOTCA changed
