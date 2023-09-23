@@ -35,6 +35,7 @@ spec:
     group: cert-manager.io
 ---
 # Create a CA issuer using our root. This will be the Issuer which istio-csr will use.
+# See more details here: https://github.com/cert-manager/istio-csr/blob/b52926bdad4ac481180616a250495dd80f36e9aa/cmd/app/options/options.go#L221
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
