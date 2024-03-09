@@ -97,7 +97,15 @@ mv intermediateB rootA
     cat rootB/root-cert.pem >> combined-root.pem
     ```
 
-2. RootA IntermediateB with `combined-root.pem`
+1. Combine two root certs into `combined-root.pem`
+
+    ```bash
+    cat rootA/root-cert.pem > combined-root2.pem
+    cat rootB/root-cert.pem >> combined-root2.pem
+    cat rootB/root-cert.pem >> combined-root2.pem
+    ```
+
+1. RootA IntermediateB with `combined-root.pem`
 
     ```bash
     kubectl delete secret cacerts -n istio-system --ignore-not-found && \
@@ -110,7 +118,7 @@ mv intermediateB rootA
     
     [Verify traffic](#how-verify-traffic)
 
-3. RootB IntermediateC with `combined-root.pem`
+1. RootB IntermediateC with `combined-root.pem`
 
     ```bash
     kubectl delete secret cacerts -n istio-system --ignore-not-found && \
@@ -123,7 +131,17 @@ mv intermediateB rootA
     
     [Verify traffic](#how-verify-traffic)
 
-4. RootB only
+1. RootB IntermediateC with `combined-root2.pem`
+
+    ```bash
+    kubectl delete secret cacerts -n istio-system --ignore-not-found && \
+    kubectl create secret generic cacerts -n istio-system \
+        --from-file=rootB/intermediateC/ca-cert.pem \
+        --from-file=rootB/intermediateC/ca-key.pem \
+        --from-file=root-cert.pem=combined-root2.pem \
+        --from-file=rootB/intermediateC/cert-chain.pem
+
+1. RootB only
 
     ```bash
     kubectl delete secret cacerts -n istio-system --ignore-not-found && \
@@ -175,5 +193,5 @@ previous PRs:
 
 - [pilot-agent support reload ROOTCA](https://github.com/istio/istio/pull/36813)
 
-- [ ] Allow istiod reload combined root cert
-- [ ] Istio agent should regenerate ROOTCA/default cert after ROOTCA changed
+- [x] Allow istiod reload combined root cert
+- [x] Istio agent should regenerate ROOTCA/default cert after ROOTCA changed
