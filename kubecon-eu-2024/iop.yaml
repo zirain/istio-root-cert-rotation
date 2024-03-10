@@ -1,0 +1,16 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  meshConfig:
+    accessLogFile: /dev/stdout
+    defaultConfig:
+      proxyMetadata:
+        PROXY_CONFIG_XDS_AGENT: "true"
+  values:
+    global:
+      logging:
+        # level: "default:info,xdsproxy:debug,wasm:debug"
+        # level: "all:debug"
+    pilot:
+      env:
+        ISTIO_MULTIROOT_MESH: "true"
