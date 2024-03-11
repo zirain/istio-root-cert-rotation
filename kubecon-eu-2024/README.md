@@ -47,7 +47,7 @@
     cat rootB/root-cert.pem >> combined-root2.pem
     ```
 
-## Installing Istio with RootA IntermediateA
+## Installing Istio with RootA
 
 1. Create cacerts in `istio-system` namespace
 
@@ -108,9 +108,9 @@
    istioctl x es $(kubectl get pod -l app=fortio -o jsonpath={.items..metadata.name}) -oprom | grep istio_requests_total
    ```
 
-## Update Cacerts with Combined Root
+## Update Cacerts to RootB
 
-1. Update `cacert` RootA IntermediateA with `combined-root.pem`
+1. Update `cacert` RootA with `combined-root.pem`
 
     ![rotation2](./drawing/rotation-2.png)
 
