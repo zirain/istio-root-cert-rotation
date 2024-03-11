@@ -49,7 +49,7 @@
 
 ## Installing Istio with RootA IntermediateA
 
-1. Create cacerts
+1. Create cacerts in `istio-system` namespace
 
     ```bash
     kubectl create ns istio-system
@@ -68,7 +68,7 @@
     kubectl get secret cacerts -n istio-system -o jsonpath="{.data['root-cert\.pem']}" | step base64 -d | step certificate inspect --short -
     ```
 
-2. Install istio
+2. Install istio with `ISTIO_MULTIROOT_MESH` with `PROXY_CONFIG_XDS_AGENT` enabled
 
     ![rotation1](./drawing/rotation-1.png)
 
@@ -100,23 +100,17 @@
    ```
 
    ```shell
-   export FORTIO_POD=$(kubectl get pod -l app=fortio -o jsonpath={.items..metadata.name})
-   export SLEEP_POD=$(kubectl get pod -l app=sleep -o jsonpath={.items..metadata.name})
-   export HTTPBIN_POD=$(kubectl get pod -l app=httpbin -o jsonpath={.items..metadata.name})
-   ```
-
-   ```shell
    # check cert
+   kubectl get cm istio-ca-root-cert -o jsonpath="{.data['root-cert\.pem']}" | step certificate inspect - --short
    istioctl pc s $(kubectl get pod -l app=fortio -o jsonpath={.items..metadata.name}) -ojson | jq -r ".dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes" | base64 -d | step certificate inspect - --short
    istioctl pc s $(kubectl get pod -l app=fortio -o jsonpath={.items..metadata.name}) -ojson | jq -r ".dynamicActiveSecrets[1].secret.validationContext.trustedCa.inlineBytes" | base64 -d | step certificate inspect - --short
    # check stats
    istioctl x es $(kubectl get pod -l app=fortio -o jsonpath={.items..metadata.name}) -oprom | grep istio_requests_total
-   kubectl get cm istio-ca-root-cert -o jsonpath="{.data['root-cert\.pem']}" | step certificate inspect - --short
    ```
 
 ## Update Cacerts with Combined Root
 
-1. RootA IntermediateA with `combined-root.pem`
+1. Update `cacert` RootA IntermediateA with `combined-root.pem`
 
     ![rotation2](./drawing/rotation-2.png)
 
@@ -129,6 +123,8 @@
         --from-file=rootA/intermediateA/cert-chain.pem
     ```
 
+    Wait for istiod reloading new Cacert:
+
     ```shell
     # check cert
     istioctl pc s $(kubectl get pod -l app=fortio -o jsonpath={.items..metadata.name}) -ojson | jq -r ".dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes" | base64 -d | step certificate inspect - --short
@@ -137,7 +133,7 @@
     istioctl x es $(kubectl get pod -l app=fortio -o jsonpath={.items..metadata.name}) -oprom | grep istio_requests_total
     ```
 
-2. RootB intermediateB with `combined-root2.pem`
+2. Update `cacert` RootB with `combined-root2.pem`
 
     ![rotation3](./drawing/rotation-3.png)
 
@@ -150,6 +146,8 @@
         --from-file=rootB/intermediateB/cert-chain.pem
     ```
 
+    Wait for istiod reloading new Cacert:
+
     ```shell
     # check cert
     istioctl pc s $(kubectl get pod -l app=fortio -o jsonpath={.items..metadata.name}) -ojson | jq -r ".dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes" | base64 -d | step certificate inspect - --short
@@ -158,7 +156,7 @@
     istioctl x es $(kubectl get pod -l app=fortio -o jsonpath={.items..metadata.name}) -oprom | grep istio_requests_total
     ```
 
-3. RootB only
+3. Update `cacert` with RootB only
 
     ![rotation4](./drawing/rotation-4.png)
 
@@ -170,6 +168,8 @@
         --from-file=rootB/intermediateB/root-cert.pem \
         --from-file=rootB/intermediateB/cert-chain.pem
     ```
+
+    Wait for istiod reloading new Cacert:
 
     ```shell
     # check cert
