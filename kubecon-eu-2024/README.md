@@ -70,6 +70,8 @@
 
 2. Install istio
 
+    ![rotation1](./drawing/rotation-1.png)
+
     ```bash
     istioctl install -f iop.yaml -y
     # verify ca root cert
@@ -100,6 +102,8 @@
 
 1. RootA IntermediateA with `combined-root.pem`
 
+    ![rotation2](./drawing/rotation-2.png)
+
     ```bash
     date -u && kubectl delete secret cacerts -n istio-system --ignore-not-found && \
     kubectl create secret generic cacerts -n istio-system \
@@ -119,6 +123,8 @@
 
 2. RootB intermediateB with `combined-root2.pem`
 
+    ![rotation3](./drawing/rotation-3.png)
+
     ```bash
     date -u && kubectl delete secret cacerts -n istio-system --ignore-not-found && \
     kubectl create secret generic cacerts -n istio-system \
@@ -137,6 +143,8 @@
     ```
 
 3. RootB only
+
+    ![rotation4](./drawing/rotation-4.png)
 
     ```bash
     date -u && kubectl delete secret cacerts -n istio-system --ignore-not-found && \
