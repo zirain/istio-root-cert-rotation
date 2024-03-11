@@ -73,7 +73,23 @@
     ![rotation1](./drawing/rotation-1.png)
 
     ```bash
-    istioctl install -f iop.yaml -y
+    cat <<EOF | istioctl install -y -f -
+    apiVersion: install.istio.io/v1alpha1
+    kind: IstioOperator
+    spec:
+      meshConfig:
+        accessLogFile: /dev/stdout
+        defaultConfig:
+          proxyMetadata:
+            PROXY_CONFIG_XDS_AGENT: "true"
+      values:
+        pilot:
+          env:
+            ISTIO_MULTIROOT_MESH: "true"
+    EOF
+    ```
+
+    ```
     # verify ca root cert
     kubectl get cm istio-ca-root-cert -o jsonpath="{.data['root-cert\.pem']}" | step certificate inspect --short -
     ```
