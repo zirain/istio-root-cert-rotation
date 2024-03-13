@@ -97,6 +97,7 @@
    ```shell
    kubectl label ns default istio-injection=enabled --overwrite
    kubectl apply -f manifests.yaml
+   kubectl apply -f fortio.yaml
    ```
 
    ```shell
